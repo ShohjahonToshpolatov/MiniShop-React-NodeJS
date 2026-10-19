@@ -1,122 +1,125 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import { request } from "./api";
+import Header from "./components/Header";
+import AuthForm from "./components/Auth";
+import ProductList from "./components/ProductList";
+import Cart from "./components/Cart";
+import Modal from "./components/Modal";
+
+import "./index.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [products, setProducts] = useState();
+  const [cart, setCart] = useState();
+  const [page, setPage] = useState();
+  const [showAuth, setShowAuth] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const [user, setUser] = useState(() => {
+    JSON.parse(localStorage.getItem("user"));
+  });
+
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+
+  useEffect(() => {
+    request("/products")
+      .then(setProducts)
+      .catch((e) => {
+        setMessage(e.message);
+      });
+  });
+
+  function addToCart(product) {
+    setCart((prev) => {
+      const found = prev.find((p) => {
+        p.id === product.id;
+      });
+      if (found) {
+        return prev.map((p) => {
+          p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p;
+        });
+      }
+
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  }
+
+  function removeFromCart(id) {
+    setCart((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  function clearCart() {
+    setCart([]);
+  }
+
+  function handleAuth(data) {
+    setUser(data.user);
+    setToken(data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("token", JSON.stringify(data.token));
+    setShowAuth(false);
+  }
+
+  function logout() {
+    setUser(null);
+    setToken(null);
+    localStorage.clear();
+  }
+
+  async function checkout() {
+    if (!user) return setShowAuth(true);
+    try {
+      const items = cart.map((p) => ({ producId: p.id, quantity: p.quantity }));
+      const data = await request("/orders", {
+        method: "POST",
+        body: { items },
+        token,
+      });
+      setMessage(
+        `✅ Buyurma #${data.order.id} qabul qilindi ! Emailingizni tekshiring`,
+      );
+      clearCart();
+      setPage("shop");
+    } catch (e) {
+      setMessage("❌ " + e.message);
+    }
+  }
+  const cartCount = Cart.reduce((sum, p) => sum + p.quantity, 0);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="container">
+      <Header
+        user={user}
+        cartCount={cartCount}
+        onLogin={() => setShowAuth(true)}
+        onLogout={logout}
+        onNavigate={setPage}
+      />
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {message && (
+        <div className="alert" onClick={() => setMessage("")}>
+          {message} <small>(yopish uchun bosing)</small>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {page === "shop" ? (
+        <ProductList products={products} onAdd={addToCart} />
+      ) : (
+        <Cart
+          items={cart}
+          onRemove={removeFromCart}
+          onClear={clearCart}
+          onCheck={checkout}
+        />
+      )}
+
+      {showAuth && (
+        <Modal title="Tizimga kirish" onClose={() => setShowAuth(false)}>
+          <AuthForm onSuccess={handleAuth} />
+        </Modal>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
