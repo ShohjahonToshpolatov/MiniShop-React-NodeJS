@@ -1,11 +1,11 @@
 import { Card } from "./Card";
 import CardItem from "./CardItem";
 
-export default function Cart({ items, onRemove, onClear, onCheck }) {
+export default function Cart({ items, onRemove, onClear, onCheck, ordering }) {
   if (items.length === 0) {
     return (
       <Card className="center">
-        <h3>Savat bosh 😔</h3>
+        <h3>Savat bo'sh 😔</h3>
         <p>Mahsulotlar sahifasidan biror narsa qo'shing</p>
       </Card>
     );
@@ -30,7 +30,7 @@ export default function Cart({ items, onRemove, onClear, onCheck }) {
         <tbody>
           {items.map((item) => (
             <tr key={item.id}>
-              <CardItem item={item} onRemove={onRemove} />
+              <CardItem item={item} onRemove={onRemove} ordering={ordering} />
             </tr>
           ))}
         </tbody>
@@ -40,11 +40,11 @@ export default function Cart({ items, onRemove, onClear, onCheck }) {
         <b>Jami :{total.toLocaleString()} som</b>
       </div>
 
-      <button className="btn-outline" onClick={onClear}>
+      <button className="btn-outline" onClick={onClear} disabled={ordering}>
         Tozalash
       </button>
-      <button className="btn-primary" onClick={onCheck}>
-        Buyurtma berish
+      <button className="btn-primary" onClick={onCheck} disabled={ordering}>
+        {ordering ? "Kuting..." : "Buyurtma berish"}
       </button>
     </Card>
   );

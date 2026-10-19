@@ -13,7 +13,7 @@ export default function AuthForm({ onSuccess }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  async function handleSumbit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -34,13 +34,16 @@ export default function AuthForm({ onSuccess }) {
   }
 
   return (
-    <form className="form" onSubmit={handleSumbit}>
+    <form className="form" onSubmit={handleSubmit}>
       {isRegister && (
         <input
           name="name"
           placeholder="Ismingizni kiriting"
           value={form.name}
           onChange={handleChange}
+          required
+          minLength={2}
+          maxLength={50}
         />
       )}
 
@@ -50,6 +53,8 @@ export default function AuthForm({ onSuccess }) {
         placeholder="Email kiriting"
         value={form.email}
         onChange={handleChange}
+        required
+        maxLength={100}
       />
 
       <input
@@ -58,6 +63,9 @@ export default function AuthForm({ onSuccess }) {
         placeholder="Parol kamida 6 xonali belgi bolsin"
         value={form.password}
         onChange={handleChange}
+        required
+        minLength={isRegister ? 6 : undefined}
+        maxLength={30}
       />
 
       {error && <p className="error">{error}</p>}
@@ -70,6 +78,7 @@ export default function AuthForm({ onSuccess }) {
         {isRegister ? "Akkauntingiz bormi ?" : "Akkauntingiz yoqmi "}
         <button
           type="button"
+          disabled={loading}
           onClick={() => setMode(isRegister ? "login" : "register")}
         >
           {isRegister ? "Kirish" : "Royxatdan otish"}

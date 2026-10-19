@@ -1,7 +1,8 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
 export async function request(path, { method = "GET", body, token } = {}) {
-  const headers = { "Content-Type": "application/json" };
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(BASE_URL + path, {
@@ -11,6 +12,10 @@ export async function request(path, { method = "GET", body, token } = {}) {
   });
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Xatolik yuz berdi");
+  if (!res.ok) {
+    const error = new Error(data.message || "Xatolik yuz berdi");
+    error.status = res.status;
+    throw error;
+  }
   return data;
 }

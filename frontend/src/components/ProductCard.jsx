@@ -1,4 +1,4 @@
-import Card from "./Card";
+import { Card } from "./Card";
 
 export default function ProductCard({ product, onAdd }) {
   const { title, price, image, in_stock } = product;

@@ -8,7 +8,7 @@ export const registerSchema = Joi.object({
 
 export const loginSchema = Joi.object({
   email: Joi.string().trim().lowercase().email().max(100).required(),
-  password: Joi.string().required(),
+  password: Joi.string().max(30).required(),
 });
 
 export const orderSchema = Joi.object({
@@ -20,5 +20,7 @@ export const orderSchema = Joi.object({
       }),
     )
     .min(1)
+    .max(100)
+    .unique("productId")
     .required(),
 });
